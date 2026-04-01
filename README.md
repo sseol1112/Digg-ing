@@ -10,6 +10,12 @@ npm install
 npm run dev
 ```
 
+## GitHub Pages 배포
+
+- 이 저장소는 `master` 브랜치 push 시 GitHub Actions로 Pages 배포됩니다.
+- 배포 URL: `https://sseol1112.github.io/Digg-ing/`
+- 저장소명을 변경하면 `vite.config.js`의 `base` 값도 함께 수정해야 합니다.
+
 ## API 연동 설정
 
 - 현재 버전은 iTunes 기반 추천만 사용하며, 별도 API 키가 필요하지 않습니다.
