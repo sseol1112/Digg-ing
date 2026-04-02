@@ -242,6 +242,8 @@ export default function App() {
   const [diggingLoading, setDiggingLoading] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState("");
   const sidebarRef = useRef(null);
 
   const currentUser = useMemo(
@@ -356,11 +358,14 @@ export default function App() {
 
     const availableApis = ["iTunes"];
     const apiText = availableApis.length ? ` (${availableApis.join(", ")} 반영)` : "";
-    setStatus(
-      ranked.length
-        ? `기준곡과 유사한 음악을 찾았어요.${apiText}`
-        : "유사곡을 찾지 못해 기본 추천을 보여줍니다."
-    );
+    if (ranked.length) {
+      const successMessage = `기준곡과 유사한 음악을 찾았어요.${apiText}`;
+      setStatus(successMessage);
+      setNoticeMessage(successMessage);
+      setShowNoticeModal(true);
+    } else {
+      setStatus("유사곡을 찾지 못해 기본 추천을 보여줍니다.");
+    }
   };
 
   const runDigging = async () => {
@@ -635,6 +640,18 @@ export default function App() {
                 취소
               </button>
               <button onClick={logout}>로그아웃</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showNoticeModal && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="notice-modal">
+            <div className="notice-badge">추천 완료</div>
+            <h3>{noticeMessage}</h3>
+            <p>결과 카드에서 별(★)로 저장하거나 공유 버튼으로 바로 공유할 수 있어요.</p>
+            <div className="notice-actions">
+              <button onClick={() => setShowNoticeModal(false)}>확인</button>
             </div>
           </div>
         </div>
