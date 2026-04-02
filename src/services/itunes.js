@@ -37,26 +37,22 @@ function mapTrack(item, reason = "기준곡과 유사한 후보") {
 }
 
 async function iTunesSearch(params) {
-  const query = new URLSearchParams({
+  const query = {
     country: "KR",
     media: "music",
     ...params
-  });
-  const response = await fetch(`${ITUNES_SEARCH_URL}?${query.toString()}`);
-  if (!response.ok) throw new Error("iTunes 검색에 실패했습니다.");
-  const json = await response.json();
-  return json.results || [];
+  };
+  const json = await requestJsonp(ITUNES_SEARCH_URL, query);
+  return json?.results || [];
 }
 
 async function iTunesLookup(params) {
-  const query = new URLSearchParams({
+  const query = {
     country: "KR",
     ...params
-  });
-  const response = await fetch(`${ITUNES_LOOKUP_URL}?${query.toString()}`);
-  if (!response.ok) throw new Error("iTunes 조회에 실패했습니다.");
-  const json = await response.json();
-  return json.results || [];
+  };
+  const json = await requestJsonp(ITUNES_LOOKUP_URL, query);
+  return json?.results || [];
 }
 
 export async function findItunesSimilarTracks(query, limit = 18) {
@@ -118,4 +114,44 @@ export async function findItunesSimilarTracks(query, limit = 18) {
   });
 
   return [...bucket.values()].slice(0, limit);
+}
+
+function requestJsonp(url, params, timeoutMs = 12000) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `itunesJsonp_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    const script = document.createElement("script");
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("iTunes 요청 시간이 초과되었습니다."));
+    }, timeoutMs);
+
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+      try {
+        delete window[callbackName];
+      } catch {
+        window[callbackName] = undefined;
+      }
+    };
+
+    window[callbackName] = (payload) => {
+      cleanup();
+      resolve(payload);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("iTunes JSONP 요청에 실패했습니다."));
+    };
+
+    const search = new URLSearchParams({
+      ...params,
+      callback: callbackName
+    });
+    script.src = `${url}?${search.toString()}`;
+    document.body.appendChild(script);
+  });
 }
